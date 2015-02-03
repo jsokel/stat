@@ -9,12 +9,6 @@
 #include "font8x16.h"
 #include "fontlargenumber.h"
 
-const byte *OledDisplay::fonts[] = {
-  font5x7,
-  font8x16,
-  fontlargenumber
-};
-
 static byte screen_buf[] = {
   /* LCD Memory organised in 64 horizontal pixel and 6 rows of byte
    B  B .............B  -----
@@ -73,13 +67,16 @@ static byte screen_buf[] = {
 
 const page_t FULL_PAGE = {0, 5, 32, 95};
 
+const byte *OledDisplay::fonts[] = {
+   font5x7,
+   font8x16,
+   fontlargenumber
+};
+
 OledDisplay::OledDisplay(int reset, int dc, int cs) {
     rstPin = reset;
     dcPin = dc;
     csPin = cs;
-
-    setPage(FULL_PAGE);
-    //setFont(0);
 }
 
 void OledDisplay::begin() {
@@ -144,9 +141,10 @@ void OledDisplay::begin() {
 
   write(OLED_DISPLAY_ON);
 
-  selectDevice(false, true);
-
+  setPage(FULL_PAGE);
   display();
+
+    //setFont(0);
 }
 
 void OledDisplay::end() {
@@ -160,7 +158,7 @@ void OledDisplay::end() {
 }
 
 void OledDisplay::resetPage() {
-  setPage(activePage);
+  setPage(FULL_PAGE);
 }
 
 void OledDisplay::setPage(page_t page) {
@@ -190,37 +188,6 @@ void OledDisplay::setByte(int page, int col, byte val) {
   screen_buf[page*64 + col] = val;
 }
 
-void OledDisplay::setFont(int fontId) {
-  const byte *font = fonts[fontId];
-  activeFont.id = fontId;
-  activeFont.width = *font;
-  activeFont.height = *(font+1);
-  activeFont.startChar = *(font+2);
-  activeFont.totalChars = *(font+3);
-  activeFont.mapSize = *(font+4)*100 + *(font+5);
-}
-
-void OledDisplay::writeChar(int x, int y, char c) {
-  // for now, this is using standard pages for rows
-  const byte *font = fonts[activeFont.id];
-  int col = x*activeFont.width;
-  page_t page = {
-      y,
-      y+(activeFont.height/2)-1,
-      col,
-      col + activeFont.width - 1
-  };
-  setPage(page);
-  int charlen = (activeFont.height * activeFont.width);
-  int offset = (c * charlen) - (c - (activeFont.startChar * charlen)) + 6; // 6 for fixed def fields
-  selectDevice(true, false);
-  for (int i=0; i<charlen; i++) {
-    SPI.transfer(*(font + offset + i));
-  }
-  selectDevice(false, true);
-  setPage(activePage);
-}
-
 void OledDisplay::fill(byte val) {
   for (int i=0; i<384; i++) {
     screen_buf[i] = val;
@@ -244,6 +211,38 @@ void OledDisplay::clear(int mode) {
     }
     selectDevice(false, true);
   }
+}
+
+void OledDisplay::setFont(int fontId) {
+  const byte *font = fonts[fontId];
+  activeFont.id = fontId;
+  activeFont.width = *font;
+  activeFont.height = *(font+1);
+  activeFont.startChar = *(font+2);
+  activeFont.totalChars = *(font+3);
+  activeFont.mapSize = *(font+4)*100 + *(font+5);
+  activeFont.data = font+6;
+}
+
+void OledDisplay::writeChar(int x, int y, char c) {
+  // for now, this is using standard pages for rows
+  const byte *font = fonts[activeFont.id];
+  int cols = x*activeFont.width;
+  page_t page = {
+      y,
+      y+(activeFont.height/8)-1,
+      FULL_PAGE.colStart + cols,
+      FULL_PAGE.colStart + cols + activeFont.width - 1
+  };
+  //setPage(page);
+  int charlen = ((activeFont.height/8) * activeFont.width);
+  int offset = 7 + (c * charlen) - (activeFont.startChar * charlen);
+  selectDevice(true, false);
+  for (int i=0; i<charlen; i++) {
+    SPI.transfer(*(font + offset + i));
+  }
+  selectDevice(false, true);
+  setPage(activePage);
 }
 
 void OledDisplay::display(void) {

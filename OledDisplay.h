@@ -2,6 +2,7 @@
 #define MICRO_OLED_H
 
 #include "spark_wiring.h"
+#include "Font.h"
 
 // Clear actions
 #define CLEAR_BUFF      0x01
@@ -67,36 +68,36 @@ typedef struct {
     byte startChar;
     int totalChars;
     int mapSize;
+    const byte *data;
 } font_t;
 
 class OledDisplay {
   public:
-  OledDisplay(int reset, int dc, int cs);
+    OledDisplay(int reset, int dc, int cs);
 
-  void begin(void);
-  void end(void);
+    void begin(void);
+    void end(void);
 
-    // fundamentals
-  void command(byte cmd);
-  void setByte(int page, int col, byte val);
-  void fill(byte val);
+      // fundamentals
+    void command(byte cmd);
+    void setByte(int page, int col, byte val);
+    void fill(byte val);
 
-  void resetPage();
-  void setPage(page_t page);
+    void resetPage();
+    void setPage(page_t page);
 
-  // Drawing
-  void clear(int mode);
-  void display(void);
-  void line(int begX, int begY, int endX, int endY);
-
+    // Drawing
+    void clear(int mode);
+    void display(void);
+    void line(int begX, int begY, int endX, int endY);
     // Text
-  void setFont(int fontId);
-  void writeChar(int x, int y, char c);
-  //void writeText(int x, int y, char *msg);
+    void setFont(int fontId);
+    void writeChar(int x, int y, char c);
+    //void writeText(int x, int y, String msg);
 
   private:
     void selectDevice(bool enable, bool command);
-  void write(byte data);
+    void write(byte data);
     int rstPin;
     int dcPin;
     int csPin;

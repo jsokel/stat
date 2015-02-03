@@ -1,14 +1,20 @@
-// This #include statement was automatically added by the Spark IDE.
-#include "OledDisplay.h"
 
+#include "application.h"
+SYSTEM_MODE(MANUAL);
+
+#include "OledDisplay.h"
 #include "rgbled.h"
+
+// function prototypes
+void drawPattern();
+void drawText(bool mode);
 
 // Define the pins we're going to call pinMode on
 int ledRed = D6;
 int ledBlue = D7;
-int btnUp = D4;
-int btnDn = D3;
-int btnPad = D5;
+int btnUp = D5;
+int btnDn = D4;
+int btnPad = D3;
 
 bool btnUpLatch = false;
 bool btnDnLatch = false;
@@ -33,10 +39,7 @@ int textMode = 0;
 
 OledDisplay display = OledDisplay(reset, dc, cs);;
 
-// This routine runs only once upon reset
 void setup() {
-    // Initialize D0 + D7 pin as output
-    // It's important you do this here, inside the setup() function rather than outside it or in the loop function.
     pinMode(ledRed, OUTPUT);
     pinMode(ledBlue, OUTPUT);
 
@@ -49,7 +52,7 @@ void setup() {
 
     pinMode(btnUp, INPUT_PULLUP);
     pinMode(btnDn, INPUT_PULLUP);
-    pinMode(btnPad, INPUT);
+    pinMode(btnPad, INPUT_PULLUP);
 
     Spark.variable("reading", &reading, DOUBLE);
     Spark.variable("volts", &volts, DOUBLE);
@@ -61,13 +64,10 @@ void setup() {
     display.begin();
 }
 
-// This routine gets called repeatedly, like once every 5-15 milliseconds.
-// Spark firmware interleaves background CPU activity associated with WiFi + Cloud activity with your code.
-// Make sure none of your code delays or blocks for too long (like more than 5 seconds), or weird things can happen.
 void loop() {
     //getTemp();
 
-    if (digitalRead(btnPad) == HIGH) {
+    if (digitalRead(btnPad) == LOW) {
         if (btnPadLatch) { // only draw once per press
             drawPattern();
             btnPadLatch = false;
@@ -75,7 +75,6 @@ void loop() {
     } else {
         btnPadLatch = true;
     }
-
     if (digitalRead(btnUp) == LOW) {
         digitalWrite(ledBlue, HIGH);
         if (btnUpLatch) { // only draw once per press
@@ -103,9 +102,10 @@ void initStat() {
 }
 
 void drawPattern() {
+    display.resetPage();
 
     switch (drawMode) {
-        case 0: // horizontal lines
+        case 0: // blank page
             RGB.color(255,0,0);
             display.clear(CLEAR_BUFF);
             break;
@@ -176,7 +176,6 @@ void drawPattern() {
 }
 
 void drawText(bool tempMode) {
-
     if (tempMode) {
 
         return;
