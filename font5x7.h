@@ -6,9 +6,6 @@ Definition for small font ASCII 5x7 font
 #ifndef FONT5X7_H
 #define FONT5X7_H
 
-#include "Font.h"
-
-//static const Font font5x7 = Font (
 static const byte font5x7[] = {
   5, 8, 0x00, 255, 12, 75,
 

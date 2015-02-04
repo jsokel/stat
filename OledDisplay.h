@@ -2,7 +2,6 @@
 #define MICRO_OLED_H
 
 #include "spark_wiring.h"
-#include "Font.h"
 
 // Clear actions
 #define CLEAR_BUFF      0x01
@@ -93,7 +92,7 @@ class OledDisplay {
     // Text
     void setFont(int fontId);
     void writeChar(int x, int y, char c);
-    //void writeText(int x, int y, String msg);
+    void writeText(int x, int y, char *text);
 
   private:
     void selectDevice(bool enable, bool command);

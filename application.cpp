@@ -8,6 +8,7 @@ SYSTEM_MODE(MANUAL);
 // function prototypes
 void drawPattern();
 void drawText(bool mode);
+void getTemp();
 
 // Define the pins we're going to call pinMode on
 int ledRed = D6;
@@ -65,7 +66,7 @@ void setup() {
 }
 
 void loop() {
-    //getTemp();
+    getTemp();
 
     if (digitalRead(btnPad) == LOW) {
         if (btnPadLatch) { // only draw once per press
@@ -177,45 +178,53 @@ void drawPattern() {
 
 void drawText(bool tempMode) {
     if (tempMode) {
-
+        display.clear(CLEAR_OLED);
+        display.setFont(1);
+        double ftemp = temp * 1.8 + 32;
+        char tempStr[8];
+        sprintf(tempStr, "%.1ff", ftemp);
+        display.writeText(1, 1, tempStr);
+        sprintf(tempStr, "%.1fc", temp);
+        display.writeText(1, 2, tempStr);
         return;
     }
 
     display.clear(CLEAR_OLED);
+    display.setFont(textMode);
     switch (textMode) {
         case 0: // small
-            RGB.color(255,0,0);
-            display.writeChar(0, 0, 'H');
-            display.writeChar(1, 0, 'e');
-            display.writeChar(2, 0, 'l');
-            display.writeChar(3, 0, 'l');
-            display.writeChar(4, 0, 'o');
-            display.writeChar(1, 1, 'W');
-            display.writeChar(2, 1, 'o');
-            display.writeChar(3, 1, 'r');
-            display.writeChar(4, 1, 'l');
-            display.writeChar(5, 1, 'd');
-            break;
         case 1: // med
-            RGB.color(0,255,0);
-            display.writeChar(0, 0, 'H');
-            display.writeChar(1, 0, 'e');
-            display.writeChar(2, 0, 'l');
-            display.writeChar(3, 0, 'l');
-            display.writeChar(4, 0, 'o');
-            display.writeChar(1, 1, 'W');
-            display.writeChar(2, 1, 'o');
-            display.writeChar(3, 1, 'r');
-            display.writeChar(4, 1, 'l');
-            display.writeChar(5, 1, 'd');
+            RGB.color(textMode==0?255:0, textMode==0?0:255, 0);
+            display.writeText(0, 0, "12345");
+            display.writeText(1, 1, "67890");
+            display.writeText(2, 2, "Hello");
+            if (textMode == 0) display.writeText(3, 3, "World");
+/*
+            display.writeChar(0, 0, '0');
+            display.writeChar(1, 0, '1');
+            display.writeChar(2, 0, '2');
+            display.writeChar(3, 0, '3');
+            display.writeChar(4, 0, '4');
+            display.writeChar(1, 1, '5');
+            display.writeChar(2, 1, '6');
+            display.writeChar(3, 1, '7');
+            display.writeChar(4, 1, '8');
+            display.writeChar(5, 1, '9');
+            display.writeChar(2, 2, 'H');
+            display.writeChar(3, 2, 'e');
+            display.writeChar(4, 2, 'l');
+            display.writeChar(5, 2, 'l');
+            display.writeChar(6, 2, 'o');
+*/
             break;
         case 2: // large
             RGB.color(0,0,255);
-            display.writeChar(0, 0, '1');
-            display.writeChar(1, 0, '2');
-            display.writeChar(2, 0, '3');
-            display.writeChar(3, 0, '4');
-            display.writeChar(4, 0, '5');
+            display.writeText(0, 0, "12345");
+            //display.writeChar(0, 0, '1');
+            //display.writeChar(1, 0, '2');
+            //display.writeChar(2, 0, '3');
+            //display.writeChar(3, 0, '4');
+            //display.writeChar(4, 0, '5');
             break;
     }
 

@@ -142,9 +142,13 @@ void OledDisplay::begin() {
   write(OLED_DISPLAY_ON);
 
   setPage(FULL_PAGE);
-  display();
 
-    //setFont(0);
+  setFont(0);
+  for (int i=0; i<50; i++) {
+    screen_buf[i] = activeFont.data[240+i];
+  }
+
+  display();
 }
 
 void OledDisplay::end() {
@@ -220,29 +224,43 @@ void OledDisplay::setFont(int fontId) {
   activeFont.height = *(font+1);
   activeFont.startChar = *(font+2);
   activeFont.totalChars = *(font+3);
-  activeFont.mapSize = *(font+4)*100 + *(font+5);
+  activeFont.mapSize = (*(font+4))*100 + *(font+5);
   activeFont.data = font+6;
 }
 
 void OledDisplay::writeChar(int x, int y, char c) {
   // for now, this is using standard pages for rows
-  const byte *font = fonts[activeFont.id];
-  int cols = x*activeFont.width;
+  const byte *font = activeFont.data;
+  int cols = x * (activeFont.width + 1);
+  int charPages = activeFont.height / 8;
+  int charsPerRow = activeFont.mapSize / activeFont.width;
+  //int charsRows = activeFont.totalChars / charsPerRow;
+  int charOffset = c - activeFont.startChar;
+  int rowOffset = (activeFont.mapSize * charPages) * (charOffset / charsPerRow);
   page_t page = {
-      y,
-      y+(activeFont.height/8)-1,
+      y * charPages,
+      (y * charPages) + charPages - 1,
       FULL_PAGE.colStart + cols,
       FULL_PAGE.colStart + cols + activeFont.width - 1
   };
-  //setPage(page);
-  int charlen = ((activeFont.height/8) * activeFont.width);
-  int offset = 7 + (c * charlen) - (activeFont.startChar * charlen);
+  //resetPage();
+  setPage(page);
+  int offset = rowOffset + ((charOffset % charsPerRow) * activeFont.width);
+  //int offset = (c * charlen) - (activeFont.startChar * charlen);
   selectDevice(true, false);
-  for (int i=0; i<charlen; i++) {
-    SPI.transfer(*(font + offset + i));
+  for (int i=0; i<charPages; i++) {
+    for (int j=0; j<activeFont.width; j++) {
+      SPI.transfer(*(font + offset + (activeFont.mapSize*i) + j));
+    }
   }
   selectDevice(false, true);
   setPage(activePage);
+}
+void OledDisplay::writeText(int x, int y, char *text) {
+  int i = x;
+  for (int j=0; j<strlen(text); j++) {
+    writeChar(i++, y, *(text + j));
+  }
 }
 
 void OledDisplay::display(void) {
