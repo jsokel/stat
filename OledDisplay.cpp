@@ -142,12 +142,7 @@ void OledDisplay::begin() {
   write(OLED_DISPLAY_ON);
 
   setPage(FULL_PAGE);
-
   setFont(0);
-  for (int i=0; i<50; i++) {
-    screen_buf[i] = activeFont.data[240+i];
-  }
-
   display();
 }
 
@@ -238,10 +233,10 @@ void OledDisplay::writeChar(int x, int y, char c) {
   int charOffset = c - activeFont.startChar;
   int rowOffset = (activeFont.mapSize * charPages) * (charOffset / charsPerRow);
   page_t page = {
-      y * charPages,
-      (y * charPages) + charPages - 1,
-      FULL_PAGE.colStart + cols,
-      FULL_PAGE.colStart + cols + activeFont.width - 1
+    y * charPages,
+    (y * charPages) + charPages - 1,
+    FULL_PAGE.colStart + cols,
+    FULL_PAGE.colStart + cols + activeFont.width - 1
   };
   //resetPage();
   setPage(page);
