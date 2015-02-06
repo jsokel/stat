@@ -28,19 +28,19 @@ bool startup = true;
 int reset = D1;
 int cs = D0;
 int dc = D2;
-int count = 0;
 
 double reading = 0.0;
 double volts = 0.0;
-double temp = 0.0;
+uint tempIdx = 0;
+bool tempReady = false;
+double temps[] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+double avgTemp = 0.0;
 
-int red, green, blue = 0;
-
-int drawMode = 0;
-int textMode = 0;
+uint drawMode = 0;
+uint textMode = 0;
 
 unsigned long curTime;
-unsigned long lastTime;
+unsigned long lastTime = 0;
 
 OledDisplay display = OledDisplay(reset, dc, cs);;
 
@@ -61,21 +61,25 @@ void setup() {
 
   Spark.variable("reading", &reading, DOUBLE);
   Spark.variable("volts", &volts, DOUBLE);
-  Spark.variable("temp", &temp, DOUBLE);
+  Spark.variable("temp", &avgTemp, DOUBLE);
 
   RGB.control(true);
-  RGB.color(0,0,0);
+  RGB.color(0, 0, 0);
 
   display.begin();
 }
 
 void loop() {
-  getTemp();
 
   curTime = millis();
+  // get temp once per second
   if (lastTime + 1000 < curTime) {
     lastTime = curTime;
-    drawTemp();
+    getTemp();
+    if (tempReady) { // dont draw until we average a few readings
+      RGB.color(255,0,50*tempIdx);
+      drawTemp();
+    }
   }
 
   if (digitalRead(btnPad) == LOW) {
@@ -90,7 +94,7 @@ void loop() {
   if (digitalRead(btnUp) == LOW) {
     digitalWrite(ledBlue, HIGH);
     if (btnUpLatch) { // only draw once per press
-      //drawText(true);
+      drawTemp();
       btnUpLatch = false;
     }
   } else {
@@ -211,20 +215,34 @@ void drawText() {
   }
 }
 
-void drawTemp() {
-  display.clear(CLEAR_OLED);
-  display.setFont(1);
-  double ftemp = temp * 1.8 + 32;
-  char tempStr[8];
-  sprintf(tempStr, "%.1ff", ftemp);
-  display.writeText(1, 1, tempStr);
-  sprintf(tempStr, "%.1fc", temp);
-  display.writeText(1, 2, tempStr);
-  return;
-}
-
 void getTemp() {
   reading = analogRead(tmpSensor);
   volts = (reading * 3.3) / 4095;
-  temp = (volts - 0.5) * 100;
+  temps[tempIdx] = (volts - 0.5) * 100;
+  tempIdx += 1;
+
+  if (tempIdx == 5) {
+    tempIdx = 0;
+    tempReady = true;
+  }
+
+  if (!tempReady) return;
+
+  double totTemp = 0.0;
+  for(uint i=0; i<5; i++) {
+    totTemp += temps[i];
+  }
+  avgTemp = totTemp/5;
+}
+
+void drawTemp() {
+  display.clear(CLEAR_OLED);
+  display.setFont(1);
+  double ftemp = avgTemp * 1.8 + 32;
+  char tempStr[8];
+  sprintf(tempStr, "%.1ff", ftemp);
+  display.writeText(1, 1, tempStr);
+  sprintf(tempStr, "%.1fc", avgTemp);
+  display.writeText(1, 2, tempStr);
+  return;
 }
